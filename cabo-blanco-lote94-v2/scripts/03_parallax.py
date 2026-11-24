@@ -15,7 +15,7 @@ FPS = 30
 HORIZ = os.environ.get("FORMAT", "v") == "h"      # FORMAT=h → versión horizontal 16:9
 OW, OH = (1920, 1080) if HORIZ else (1080, 1920)
 SRC = "../cabo-blanco-lote94/source/fotos"
-FONT_SEMI = "hf/assets/fonts/Montserrat-600.ttf"
+FONT_SEMI = "hf/assets/fonts/Montserrat-700.ttf"   # callouts en bold para leerse sobre el terreno
 FONT_BOLD = "hf/assets/fonts/InterTight-800.ttf"
 POLY = json.load(open("build/polygons.json"))
 
@@ -69,13 +69,21 @@ def load(name):
 
 
 def grade(frame):
-    """Look de la referencia: natural, un poco menos saturado, cálido suave, contraste medio."""
+    """Look cinematográfico: exposición −, curva en S suave con altas luces contenidas,
+    sombras frías / luces cálidas (teal & orange), saturación contenida. Los gráficos blancos
+    se dibujan DESPUÉS del etalonaje, así que quedan blanco puro."""
     f = frame.astype(np.float32) / 255.0
+    f = f * 0.90                                                 # exposición −0.15 EV aprox.
+    f = np.clip(f, 0, 1)
+    f = f + 0.10 * f * (1 - f) * (f - 0.5) * 4                   # curva en S suave
+    f = 1 - (1 - f) ** 1.06                                      # altas luces más suaves (no se queman)
     lum = f @ np.array([0.114, 0.587, 0.299], np.float32)
-    f = lum[..., None] + (f - lum[..., None]) * 0.90           # saturación 0.90
-    f = np.clip((f - 0.5) * 1.05 + 0.5, 0, 1)                   # contraste +5 %
-    f[..., 2] *= 1.025; f[..., 0] *= 0.975                      # cálido sutil (BGR)
-    return (np.clip(f, 0, 1) ** 1.02 * 255).astype(np.uint8)
+    f = lum[..., None] + (f - lum[..., None]) * 0.85             # saturación 0.85
+    sh = ((1 - lum) ** 2)[..., None]; hi = (lum ** 2)[..., None]
+    f += sh * np.array([0.06, 0.022, -0.03], np.float32)       # sombras teal (BGR)
+    f += hi * np.array([-0.045, 0.01, 0.045], np.float32)       # luces cálidas (BGR)
+    f = np.clip(f, 0, 1) ** 1.06                                 # medios un poco más densos
+    return (np.clip(f, 0, 1) * 255).astype(np.uint8)
 
 
 class Cam:
@@ -181,14 +189,16 @@ def draw_overlays(frame, cam, cfg, t, tsec):
             src = np.array([[0, 0], [1400, 0], [1400, 700], [0, 700]], np.float32)
             M = cv2.getPerspectiveTransform(src, dst)
             warped = cv2.warpPerspective(np.array(lab), M, (OW, OH), flags=cv2.INTER_LINEAR)
-            warped[..., 3] = (warped[..., 3] * a * 0.95).astype(np.uint8)
+            warped[..., 3] = (warped[..., 3] * a * 0.97).astype(np.uint8)
+            shw = warped.copy(); shw[..., :3] = 0; shw[..., 3] = (shw[..., 3] * 0.6).astype(np.uint8)
+            ov.alpha_composite(Image.fromarray(shw).filter(ImageFilter.GaussianBlur(6)))
             ov.alpha_composite(Image.fromarray(warped))
     for (fx, fy, text, side) in cfg.get("callouts", []):
         a = ease_out((tsec - 0.6) / 0.5)
         if a <= 0:
             continue
         (px, py), = cam.fwd([(fx * 1365, fy * 1024)], t)
-        f = ImageFont.truetype(FONT_SEMI, 44)
+        f = ImageFont.truetype(FONT_SEMI, 46)
         lines = text.split("\n")
         tw = max(dr.textlength(ln, font=f) for ln in lines)
         # el texto debe caber en cuadro (margen 60 px): si no cabe hacia el lado pedido, se voltea
@@ -202,7 +212,10 @@ def draw_overlays(frame, cam, cfg, t, tsec):
             ty_ = ey - 18 - (len(lines) - 1 - i) * 52
             tx_ = ex + (12 if side > 0 else -12)
             tx_ = min(max(tx_, 60 + (tw if side < 0 else 0)), OW - 60 - (tw if side > 0 else 0))
-            dr.text((tx_ + 2, ty_ + 2), ln, font=f, fill=(0, 0, 0, int(90 * ta)), anchor="ls" if side > 0 else "rs")
+            sh_ = Image.new("RGBA", (OW, OH), (0, 0, 0, 0))
+            ImageDraw.Draw(sh_).text((tx_ + 2, ty_ + 3), ln, font=f, fill=(0, 0, 0, int(200 * ta)), anchor="ls" if side > 0 else "rs")
+            ov.alpha_composite(sh_.filter(ImageFilter.GaussianBlur(5)))
+            dr = ImageDraw.Draw(ov)
             dr.text((tx_, ty_), ln, font=f, fill=(255, 255, 255, int(255 * ta)), anchor="ls" if side > 0 else "rs")
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     base = Image.fromarray(rgb).convert("RGBA")
