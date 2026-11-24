@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <!-- Cabo Blanco · Caleta Loma Lot 94 · 40 s · 1080x1920 · 30 fps
+         Rejilla: música "Inspired" (Kevin MacLeod) 120 BPM → 1 beat = 0.5 s, 1 compás = 2 s. Todos los cortes caen en beat.
+         Zona segura común TikTok/Reels/Shorts: y 288–1248, x 120–888 (x ≤ 780 por debajo de y 840). -->
+    <script src="assets/vendor/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <style>
+      :root {
+        --navy: #0c2535;
+        --sand: #e6cf9f;
+        --white: #ffffff;
+        --serif: "Cormorant Garamond", Georgia, serif;
+        --sans: "Montserrat", Arial, sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); }
+      #root { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--navy); font-family: var(--sans); color: var(--white); }
+      .clip { position: absolute; inset: 0; width: 1080px; height: 1920px; overflow: hidden; }
+
+      /* foto a sangre */
+      .fb { position: absolute; top: 0; height: 1920px; width: 2560px; }
+      .fb img, .cimg img, .bgblur img { display: block; width: 100%; height: 100%; }
+
+      /* layout tarjeta (fotos con el polígono del lote) */
+      .bgblur { position: absolute; top: -80px; left: -760px; width: 2720px; height: 2040px; filter: blur(38px) saturate(1.1); }
+      .bgtint { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,37,53,.86) 0%, rgba(12,37,53,.6) 45%, rgba(12,37,53,.88) 100%); }
+      .card { position: absolute; inset: 0; clip-path: inset(500px 60px 640px 60px round 26px); }
+      .card .wipe { position: absolute; inset: 0; }
+      .cimg { position: absolute; top: 450px; height: 880px; width: 1173px; }
+      .cardframe { position: absolute; left: 60px; top: 500px; width: 960px; height: 780px; border-radius: 26px; border: 2px solid rgba(230,207,159,.6); }
+      .cardshade { position: absolute; left: 0; top: 1040px; width: 1080px; height: 240px; background: linear-gradient(0deg, rgba(8,26,38,.9), rgba(8,26,38,0)); }
+
+      /* legibilidad */
+      .shade-top { position: absolute; left: 0; top: 0; width: 1080px; height: 1000px; background: linear-gradient(180deg, rgba(8,26,38,.78) 0%, rgba(8,26,38,.5) 50%, rgba(8,26,38,0) 100%); }
+      .shade-bot { position: absolute; left: 0; bottom: 0; width: 1080px; height: 600px; background: linear-gradient(0deg, rgba(8,26,38,.55) 0%, rgba(8,26,38,0) 100%); }
+      .vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.38) 100%); }
+
+      /* tipografía */
+      .eyebrow { font-family: var(--sans); font-weight: 600; font-size: 28px; letter-spacing: .3em; text-transform: uppercase; color: var(--sand); }
+      .display { font-family: var(--serif); font-weight: 600; font-size: 150px; line-height: .92; letter-spacing: -.01em; }
+      .ital { font-family: var(--serif); font-style: italic; font-weight: 500; }
+      .body { font-family: var(--sans); font-weight: 500; font-size: 34px; letter-spacing: .02em; }
+      .mask { display: block; overflow: hidden; padding-bottom: .08em; }
+      .mask > span { display: inline-block; }
+      .tshadow { text-shadow: 0 4px 30px rgba(0,0,0,.5); }
+      .rule { height: 3px; background: var(--sand); transform-origin: 0% 50%; }
+      .block { position: absolute; left: 120px; width: 760px; }
+
+      /* pin del lote */
+      .pin { position: absolute; width: 0; height: 0; }
+      .pin .dot { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; background: var(--sand); box-shadow: 0 0 0 6px rgba(255,255,255,.9); }
+      .pin .ring { position: absolute; left: -60px; top: -60px; width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--sand); }
+      .pin .stem { position: absolute; left: -2px; top: -74px; width: 4px; height: 58px; background: var(--white); transform-origin: 50% 100%; }
+      .pin .tag { position: absolute; left: -110px; top: -150px; width: 220px; text-align: center; background: var(--white); color: var(--navy); font-weight: 700; font-size: 30px; letter-spacing: .2em; padding: 16px 0; border-radius: 10px; }
+
+      /* chips */
+      .chip { position: absolute; left: 120px; height: 84px; display: flex; align-items: center; gap: 20px; padding: 0 34px 0 24px; border-radius: 42px; background: rgba(12,37,53,.82); border: 2px solid rgba(230,207,159,.6); font-weight: 600; font-size: 34px; }
+      .chip svg { width: 44px; height: 44px; flex: none; }
+      .tag2 { display: inline-block; padding: 12px 22px; border-radius: 40px; background: rgba(255,255,255,.94); color: var(--navy); font-weight: 700; font-size: 28px; letter-spacing: .1em; text-transform: uppercase; margin-right: 10px; }
+
+      #flash { position: absolute; inset: 0; background: #fff; opacity: 0; z-index: 60; }
+
+      /* tarjeta final */
+      .waves { position: absolute; left: -200px; width: 1480px; height: 520px; }
+      .waves path { fill: none; stroke: rgba(230,207,159,.3); stroke-width: 3; }
+      .cline { display: flex; align-items: center; gap: 20px; font-size: 36px; font-weight: 500; }
+      .cline svg { width: 42px; height: 42px; flex: none; }
+      .wm span { display: inline-block; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40" data-width="1080" data-height="1920">
+
+      <!-- S1 · HOOK · IMG_0188 · 0–3 -->
+      <div id="s1" class="clip" data-start="0" data-duration="3" data-track-index="1" style="z-index:1">
+        <div class="fb" id="s1img" style="left:-740px"><img src="assets/img/IMG_0188.jpg" alt="" /></div>
+        <div class="shade-top"></div><div class="shade-bot"></div><div class="vignette"></div>
+        <div class="block tshadow" id="s1txt" style="top:320px">
+          <div class="mask eyebrow"><span id="s1a">New listing · Los Cabos</span></div>
+          <div class="mask ital" style="font-size:80px;margin-top:20px;line-height:1"><span id="s1b">One of the last</span></div>
+          <div class="mask display"><span id="s1c">Oceanside</span></div>
+          <div class="mask ital" style="font-size:88px;line-height:1"><span id="s1d">lots in Palmilla</span></div>
+          <div class="rule" id="s1rule" style="width:180px;margin-top:30px"></div>
+        </div>
+      </div>
+
+      <!-- S2 · UBICACIÓN · IMG_0194 · 3–6 -->
+      <div id="s2" class="clip" data-start="3" data-duration="3" data-track-index="1" style="z-index:2">
+        <div class="fb" id="s2img" style="left:-177px"><img src="assets/img/IMG_0194.jpg" alt="" /></div>
+        <div class="shade-top"></div><div class="shade-bot"></div><div class="vignette"></div>
+        <div class="block tshadow" style="top:310px">
+          <svg id="s2pin" viewBox="0 0 64 80" style="width:68px;height:85px;display:block;margin-bottom:18px">
+            <path d="M32 2C16 2 4 14 4 30c0 21 28 46 28 46s28-25 28-46C60 14 48 2 32 2z" fill="#e6cf9f" />
+            <circle cx="32" cy="30" r="11" fill="#0c2535" />
+          </svg>
+          <div class="display" id="s2title" style="font-size:132px;letter-spacing:.04em"><span class="ch" style="display:inline-block">P</span><span class="ch" style="display:inline-block">A</span><span class="ch" style="display:inline-block">L</span><span class="ch" style="display:inline-block">M</span><span class="ch" style="display:inline-block">I</span><span class="ch" style="display:inline-block">L</span><span class="ch" style="display:inline-block">L</span><span class="ch" style="display:inline-block">A</span></div>
+          <div class="rule" id="s2rule" style="width:360px;margin:22px 0 24px"></div>
+          <div class="mask body"><span id="s2a">Oceanside · San José Corridor</span></div>
+          <div class="mask eyebrow" style="margin-top:12px"><span id="s2b">Los Cabos, B.C.S.</span></div>
+        </div>
+      </div>
+
+      <!-- S3 · LOTE · IMG_0196 · 6–9 -->
+      <div id="s3" class="clip" data-start="6" data-duration="3" data-track-index="1" style="z-index:3">
+        <div class="bgblur" id="s3bg"><img src="assets/img/IMG_0196.jpg" alt="" /></div>
+        <div class="bgtint"></div>
+        <div class="card" id="s3card">
+          <div class="cimg" id="s3img" style="left:-146px;transform-origin:686px 440px"><img src="assets/img/IMG_0196.jpg" alt="" /></div>
+          <div class="cardshade"></div>
+        </div>
+        <div class="cardframe" id="s3frame"></div>
+        <div class="pin" id="s3pin" style="left:534px;top:916px">
+          <div class="ring" id="s3ring"></div><div class="dot" id="s3dot"></div><div class="stem" id="s3stem"></div>
+          <div class="tag" id="s3tag">LOT 94</div>
+        </div>
+        <div class="block tshadow" style="top:300px" data-layout-allow-occlusion>
+          <div class="mask eyebrow"><span id="s3a">Subcommunity</span></div>
+          <div class="mask ital" style="font-size:100px;line-height:1.05"><span id="s3b" data-layout-allow-occlusion>Caleta Loma</span></div>
+        </div>
+        <div class="block" style="top:1180px;width:660px" data-layout-allow-occlusion data-layout-allow-safe-zone>
+          <div class="mask body"><span id="s3c" data-layout-allow-occlusion data-layout-allow-safe-zone>Oceanside of Palmilla</span></div>
+        </div>
+      </div>
+
+      <!-- S4 · SUPERFICIE · IMG_0195 · 9–13 -->
+      <div id="s4" class="clip" data-start="9" data-duration="4" data-track-index="1" style="z-index:4">
+        <div class="bgblur"><img src="assets/img/IMG_0195.jpg" alt="" /></div>
+        <div class="bgtint"></div>
+        <div class="card">
+          <div class="cimg" id="s4img" style="left:-105px;transform-origin:645px 440px"><img src="assets/img/IMG_0195.jpg" alt="" /></div>
+          <div class="cardshade"></div>
+        </div>
+        <div class="cardframe"></div>
+        <div class="block tshadow" style="top:300px">
+          <div class="mask eyebrow"><span id="s4a">Lot size · 45 × 41 m</span></div>
+          <div class="display" style="font-size:124px;line-height:1.08"><span id="s4num">0</span><span class="ital" style="font-size:84px"> m²</span></div>
+        </div>
+        <div class="block" style="top:1180px;width:660px">
+          <div class="mask body"><span id="s4c">≈ 19,720 sq ft of land</span></div>
+        </div>
+      </div>
+
+      <!-- S5 · VISTAS · IMG_0193 · 12.5–16 -->
+      <div id="s5" class="clip" data-start="12.5" data-duration="3.5" data-track-index="2" style="z-index:5">
+        <div class="bgblur" id="s5bg"><img src="assets/img/IMG_0193.jpg" alt="" /></div>
+        <div class="bgtint" id="s5tint"></div>
+        <div class="card" id="s5card">
+          <div class="wipe" id="s5wipe">
+            <div class="cimg" id="s5img" style="left:-151px;top:410px;width:1280px;height:960px;transform-origin:691px 480px"><img src="assets/img/IMG_0193.jpg" alt="" /></div>
+            <div class="cardshade"></div>
+          </div>
+        </div>
+        <div class="cardframe" id="s5frame"></div>
+        <div class="block tshadow" id="s5top" style="top:300px">
+          <div class="mask eyebrow"><span id="s5a">Primary view · Ocean</span></div>
+          <div class="mask ital" style="font-size:100px;line-height:1.05"><span id="s5b">Panoramic views</span></div>
+        </div>
+        <div class="block" id="s5bot" style="top:1180px;width:660px">
+          <div class="mask body"><span id="s5c">Overlooking the Sea of Cortez</span></div>
+        </div>
+      </div>
+
+      <!-- S6 · CARACTERÍSTICAS · IMG_0189 · 16–19.5 -->
+      <div id="s6" class="clip" data-start="16" data-duration="3.5" data-track-index="1" style="z-index:6">
+        <div class="fb" id="s6img" style="left:-356px;transform-origin:896px 960px"><img src="assets/img/IMG_0189.jpg" alt="" /></div>
+        <div class="shade-top"></div><div class="shade-bot"></div><div class="vignette"></div>
+        <div class="block tshadow" style="top:320px">
+          <div class="mask eyebrow"><span id="s6a">Ready to build</span></div>
+          <div class="mask display" style="font-size:120px"><span id="s6b">Lot features</span></div>
+        </div>
+        <div class="chip" id="chip1" style="top:820px"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linecap="round"><path d="M16 4 8 44M32 4l8 40M24 8v6M24 21v6M24 34v6"/></svg>Paved road</div>
+        <div class="chip" id="chip2" style="top:924px"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linejoin="round"><path d="M27 4 10 27h13l-3 17 18-24H25z"/></svg>CFE electricity</div>
+        <div class="chip" id="chip3" style="top:1028px"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linejoin="round"><path d="M24 5s-13 15-13 25a13 13 0 0 0 26 0C37 20 24 5 24 5z"/></svg>Municipal water</div>
+        <div class="chip" id="chip4" style="top:1132px"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linecap="round"><path d="M4 32h40M8 32V22h32v10M14 22v-5h20v5"/></svg>Flat topography</div>
+      </div>
+
+      <!-- S7 · COMUNIDAD · IMG_0192 · 19.5–23 -->
+      <div id="s7" class="clip" data-start="19.5" data-duration="3.5" data-track-index="2" style="z-index:7">
+        <div class="bgblur" id="s7bg"><img src="assets/img/IMG_0192.jpg" alt="" /></div>
+        <div class="bgtint"></div>
+        <div class="card" id="s7card">
+          <div class="cimg" id="s7img" style="left:0px;transform-origin:540px 440px"><img src="assets/img/IMG_0192.jpg" alt="" /></div>
+          <div class="cardshade"></div>
+        </div>
+        <div class="cardframe" id="s7frame"></div>
+        <div class="block tshadow" id="s7top" style="top:300px">
+          <div class="mask eyebrow"><span id="s7a">Golf community</span></div>
+          <div class="mask display" style="font-size:120px"><span id="s7b">Palmilla</span></div>
+        </div>
+        <div class="block" id="s7bot" style="top:1170px;width:660px">
+          <span class="tag2" id="s7t1">Residential</span><span class="tag2" id="s7t2">Escritura</span>
+        </div>
+      </div>
+
+      <!-- S8 · ASPIRACIONAL · IMG_0191 · 23–27 -->
+      <div id="s8" class="clip" data-start="23" data-duration="4" data-track-index="1" style="z-index:8">
+        <div class="fb" id="s8img" style="left:-612px;transform-origin:1152px 960px"><img src="assets/img/IMG_0191.jpg" alt="" /></div>
+        <div class="shade-top"></div><div class="shade-bot"></div><div class="vignette"></div>
+        <div class="block tshadow" style="top:320px">
+          <div class="mask body" style="font-size:38px"><span id="s8a">Design your</span></div>
+          <div class="mask display" style="font-size:136px"><span id="s8b">Oceanview</span></div>
+          <div class="mask ital" style="font-size:92px;line-height:1.02"><span id="s8c">home in Los Cabos</span></div>
+          <div class="rule" id="s8rule" style="width:180px;margin-top:30px"></div>
+        </div>
+      </div>
+
+      <!-- S9 · PRECIO · IMG_0190 · 27–33 -->
+      <div id="s9" class="clip" data-start="27" data-duration="6" data-track-index="2" style="z-index:9">
+        <div class="fb" id="s9img" style="left:-868px;transform-origin:1408px 960px"><img src="assets/img/IMG_0190.jpg" alt="" /></div>
+        <div class="shade-top"></div><div class="shade-bot"></div><div class="vignette"></div>
+        <div class="block tshadow" style="top:320px">
+          <div class="mask eyebrow" style="color:#fff"><span id="s9a">Offered at</span></div>
+          <div class="display" id="s9price" style="font-size:136px;line-height:1.1;margin-top:6px">$<span id="s9num">0</span></div>
+          <div class="mask eyebrow" style="letter-spacing:.5em;color:#fff;margin-top:6px"><span id="s9b">USD</span></div>
+          <div class="rule" id="s9rule" style="width:420px;margin:28px 0 26px"></div>
+          <div class="mask body"><span id="s9c">Caleta Loma · Lot 94 · 1,832 m²</span></div>
+          <div class="mask eyebrow" style="margin-top:14px;color:#fff"><span id="s9d">MLS #26-5012</span></div>
+        </div>
+      </div>
+
+      <!-- S10 · TARJETA FINAL · 32.5–40 -->
+      <div id="s10" class="clip" data-start="32.5" data-duration="7.5" data-track-index="0" style="z-index:0;background:linear-gradient(180deg,#0c2535 0%,#123548 60%,#0c2535 100%)">
+        <svg class="waves" id="wave1" style="top:-60px" viewBox="0 0 1480 520" data-layout-ignore><path d="M0 260 C 185 180, 370 340, 555 260 S 925 180, 1110 260 S 1480 340, 1480 260"/><path d="M0 300 C 185 220, 370 380, 555 300 S 925 220, 1110 300 S 1480 380, 1480 300"/><path d="M0 340 C 185 260, 370 420, 555 340 S 925 260, 1110 340 S 1480 420, 1480 340"/></svg>
+        <svg class="waves" id="wave2" style="top:1290px" viewBox="0 0 1480 520" data-layout-ignore><path d="M0 200 C 185 120, 370 280, 555 200 S 925 120, 1110 200 S 1480 280, 1480 200"/><path d="M0 240 C 185 160, 370 320, 555 240 S 925 160, 1110 240 S 1480 320, 1480 240"/><path d="M0 280 C 185 200, 370 360, 555 280 S 925 200, 1110 280 S 1480 360, 1480 280"/></svg>
+        <div class="block" style="top:430px">
+          <div class="display wm" id="s10wm" data-layout-allow-safe-zone style="font-size:132px;line-height:.95;letter-spacing:.1em"><span>C</span><span>A</span><span>B</span><span>O</span><br /><span>B</span><span>L</span><span>A</span><span>N</span><span>C</span><span>O</span></div>
+          <div class="mask eyebrow" style="margin-top:20px;letter-spacing:.42em"><span id="s10a">Newport</span></div>
+          <div class="rule" id="s10rule" style="width:260px;margin:44px 0 44px"></div>
+          <div class="mask ital" style="font-size:72px;line-height:1.05"><span id="s10b">Schedule your</span></div>
+          <div class="mask ital" style="font-size:72px;line-height:1.05"><span id="s10c">private showing</span></div>
+          <div style="height:48px"></div>
+          <div class="mask"><span id="s10d" class="cline"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linejoin="round"><path d="M10 5h9l4 10-6 4a26 26 0 0 0 12 12l4-6 10 4v9c0 2-2 4-4 4C20 42 6 28 6 9c0-2 2-4 4-4z"/></svg>553-452-8352</span></div>
+          <div class="mask" style="margin-top:14px"><span id="s10e" class="cline"><svg viewBox="0 0 48 48" fill="none" stroke="#e6cf9f" stroke-width="3" stroke-linejoin="round"><rect x="5" y="10" width="38" height="28" rx="3"/><path d="m6 12 18 14 18-14"/></svg>amber@caboblanco.mx</span></div>
+        </div>
+      </div>
+
+      <div id="flash" class="clip" data-start="19" data-duration="1" data-track-index="6"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const E = "power3.out";
+      const up = (sel, t, d = 0.5) => tl.fromTo(sel, { yPercent: 110 }, { yPercent: 0, duration: d, ease: "expo.out" }, t);
+      const out = (sel, t, d = 0.25) => tl.to(sel, { yPercent: -110, duration: d, ease: "power2.in" }, t);
+      const count = (sel, to, t, d) => {
+        const el = document.querySelector(sel);
+        const o = { v: 0 };
+        tl.to(o, { v: to, duration: d, ease: "power2.out", onUpdate: () => { el.textContent = Math.round(o.v).toLocaleString("en-US"); } }, t);
+      };
+      const CARD = "inset(500px 60px 640px 60px round 26px)";
+      const FULL = "inset(0px 0px 0px 0px round 0px)";
+
+      // S1 HOOK — el titular ya está en pantalla en el frame 0 (miniatura)
+      tl.fromTo("#s1img", { scale: 1.3, filter: "blur(3px)" }, { scale: 1.1, filter: "blur(0px)", duration: 0.7, ease: "expo.out" }, 0);
+      tl.to("#s1img", { scale: 1.0, duration: 2.1, ease: "none" }, 0.7);
+      tl.fromTo("#s1txt", { scale: 1.12, transformOrigin: "0% 0%" }, { scale: 1, duration: 0.7, ease: "expo.out" }, 0);
+      tl.fromTo("#s1rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: E }, 0.5);
+      tl.to("#s1", { x: -300, filter: "blur(22px)", duration: 0.2, ease: "power2.in" }, 2.8);
+
+      // S2 UBICACIÓN
+      tl.fromTo("#s2", { x: 340, filter: "blur(26px)" }, { x: 0, filter: "blur(0px)", duration: 0.35, ease: E }, 3.0);
+      tl.fromTo("#s2img", { x: 0 }, { x: -256, duration: 3, ease: "none" }, 3.0);
+      tl.fromTo("#s2pin", { y: -140, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "bounce.out" }, 3.2);
+      tl.fromTo("#s2title .ch", { yPercent: 60, opacity: 0, filter: "blur(10px)" }, { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 0.45, ease: E, stagger: 0.05 }, 3.4);
+      tl.fromTo("#s2rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: E }, 3.9);
+      up("#s2a", 4.0); up("#s2b", 4.25);
+      tl.to("#s2", { scale: 1.35, filter: "blur(18px)", opacity: 0.4, duration: 0.25, ease: "power2.in" }, 5.75);
+
+      // S3 LOTE — foto a sangre que se encoge a tarjeta
+      tl.fromTo("#s3bg", { scale: 1.3 }, { scale: 1.08, duration: 3, ease: "none" }, 6.0);
+      tl.fromTo("#s3card", { clipPath: FULL }, { clipPath: CARD, duration: 0.7, ease: "power3.inOut" }, 6.0);
+      tl.fromTo("#s3img", { scale: 2.4 }, { scale: 1.0, duration: 0.7, ease: "power3.inOut" }, 6.0);
+      tl.to("#s3img", { scale: 1.04, duration: 2.05, ease: "none" }, 6.7);
+      tl.fromTo("#s3frame", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 6.55);
+      up("#s3a", 6.5); up("#s3b", 6.65);
+      tl.fromTo("#s3dot", { scale: 0 }, { scale: 1, duration: 0.35, ease: "back.out(3)" }, 6.9);
+      tl.fromTo("#s3stem", { scaleY: 0 }, { scaleY: 1, duration: 0.25, ease: E }, 7.0);
+      tl.fromTo("#s3tag", { y: 30, opacity: 0, scale: 0.8 }, { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "back.out(2.5)" }, 7.1);
+      tl.fromTo("#s3ring", { scale: 0.2, opacity: 0 }, { keyframes: [{ opacity: 1, duration: 0.01 }, { scale: 1.8, opacity: 0, duration: 0.9, ease: "power2.out" }, { scale: 0.2, duration: 0.01 }, { opacity: 1, duration: 0.08 }, { scale: 1.8, opacity: 0, duration: 0.9, ease: "power2.out" }] }, 7.0);
+      up("#s3c", 7.3);
+      tl.to("#s3img, #s3pin", { x: -980, filter: "blur(16px)", duration: 0.25, ease: "power2.in" }, 8.75);
+      out("#s3a, #s3b, #s3c", 8.75);
+
+      // S4 SUPERFICIE — push dentro de la tarjeta + contador
+      tl.fromTo("#s4img", { x: 980, filter: "blur(16px)" }, { x: 0, filter: "blur(0px)", duration: 0.4, ease: E }, 9.0);
+      tl.fromTo("#s4img", { scale: 1.0 }, { scale: 1.08, duration: 3.5, ease: "none", immediateRender: false }, 9.0);
+      up("#s4a", 9.15);
+      tl.fromTo("#s4num, #s4num + .ital", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.25, ease: E }, 9.25);
+      count("#s4num", 1832, 9.3, 1.3);
+      up("#s4c", 10.0);
+      out("#s4a, #s4c", 12.3, 0.2);
+      tl.to("#s4num", { opacity: 0, duration: 0.2 }, 12.3);
+
+      // S5 VISTAS — barrido vertical
+      tl.fromTo("#s5bg, #s5tint", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "none" }, 12.5);
+      tl.fromTo("#s5wipe", { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 0.5, ease: "power3.inOut" }, 12.5);
+      tl.fromTo("#s5img", { y: 0, scale: 1.15 }, { y: -80, scale: 1.0, duration: 3.15, ease: "power1.out" }, 12.5);
+      up("#s5a", 12.75); up("#s5b", 12.9); up("#s5c", 13.4);
+      tl.to("#s5card", { clipPath: FULL, duration: 0.35, ease: "power3.in" }, 15.65);
+      tl.to("#s5img", { scale: 2.4, duration: 0.35, ease: "power3.in" }, 15.65);
+      tl.to("#s5frame, #s5top, #s5bot", { opacity: 0, duration: 0.2 }, 15.65);
+
+      // S6 CARACTERÍSTICAS — chips al beat
+      tl.fromTo("#s6img", { scale: 1.25, filter: "blur(10px)" }, { scale: 1.06, filter: "blur(0px)", duration: 0.5, ease: E }, 16.0);
+      tl.to("#s6img", { scale: 1.0, x: -260, duration: 3.0, ease: "none" }, 16.5);
+      up("#s6a", 16.1); up("#s6b", 16.25);
+      ["#chip1", "#chip2", "#chip3", "#chip4"].forEach((c, i) => {
+        tl.fromTo(c, { x: -700, opacity: 0 }, { x: 0, opacity: 1, duration: 0.45, ease: "back.out(1.4)" }, 16.5 + i * 0.5);
+      });
+      tl.fromTo("#flash", { opacity: 0 }, { opacity: 0.85, duration: 0.15, ease: "power2.in" }, 19.35);
+      tl.to("#flash", { opacity: 0, duration: 0.3, ease: "power2.out" }, 19.5);
+
+      // S7 COMUNIDAD
+      tl.fromTo("#s7card, #s7frame", { scale: 0.82, rotation: -4, transformOrigin: "540px 890px" }, { scale: 1, rotation: 0, duration: 0.6, ease: "back.out(1.6)" }, 19.5);
+      tl.fromTo("#s7img", { scale: 1.12 }, { scale: 1.0, duration: 3.2, ease: "power1.out" }, 19.5);
+      tl.fromTo("#s7bg", { scale: 1.25 }, { scale: 1.05, duration: 3.5, ease: "none" }, 19.5);
+      up("#s7a", 19.7); up("#s7b", 19.85);
+      tl.fromTo("#s7t1", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 20.5);
+      tl.fromTo("#s7t2", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 21.0);
+      tl.to("#s7card", { clipPath: FULL, duration: 0.3, ease: "power3.in" }, 22.7);
+      tl.to("#s7img", { scale: 2.4, duration: 0.3, ease: "power3.in" }, 22.7);
+      tl.to("#s7frame, #s7top, #s7bot", { opacity: 0, duration: 0.2 }, 22.7);
+
+      // S8 ASPIRACIONAL
+      tl.fromTo("#s8img", { scale: 1.22, filter: "blur(10px)" }, { scale: 1.06, filter: "blur(0px)", duration: 0.5, ease: E }, 23.0);
+      tl.to("#s8img", { scale: 1.0, x: -330, duration: 3.5, ease: "none" }, 23.5);
+      up("#s8a", 23.4); up("#s8b", 23.6); up("#s8c", 23.85);
+      tl.fromTo("#s8rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: E }, 24.2);
+      tl.to("#s8", { x: 300, filter: "blur(22px)", duration: 0.2, ease: "power2.in" }, 26.8);
+
+      // S9 PRECIO
+      tl.fromTo("#s9", { x: -340, filter: "blur(26px)" }, { x: 0, filter: "blur(0px)", duration: 0.35, ease: E }, 27.0);
+      tl.fromTo("#s9img", { scale: 1.0, x: 0 }, { scale: 1.12, x: -200, duration: 6, ease: "none" }, 27.0);
+      up("#s9a", 27.35);
+      tl.fromTo("#s9price", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.25, ease: E }, 27.45);
+      count("#s9num", 1450000, 27.5, 1.5);
+      up("#s9b", 28.6);
+      tl.fromTo("#s9rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: E }, 29.0);
+      up("#s9c", 29.2); up("#s9d", 29.5);
+      tl.fromTo("#s9", { clipPath: "circle(80% at 50% 45%)" }, { clipPath: "circle(0% at 50% 45%)", duration: 0.5, ease: "power3.in" }, 32.5);
+
+      // S10 TARJETA FINAL
+      tl.fromTo("#wave1", { x: 0 }, { x: -240, duration: 7.5, ease: "none" }, 32.5);
+      tl.fromTo("#wave2", { x: -240 }, { x: 0, duration: 7.5, ease: "none" }, 32.5);
+      document.querySelectorAll("#s10wm span").forEach((s, i) => {
+        const k = i < 4 ? i - 1.5 : i - 6.5;
+        tl.fromTo(s, { x: k * 46, opacity: 0, filter: "blur(10px)" }, { x: 0, opacity: 1, filter: "blur(0px)", duration: 0.9, ease: "expo.out" }, 33.0 + (i < 4 ? 0 : 0.12));
+      });
+      up("#s10a", 33.5);
+      tl.fromTo("#s10rule", { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: E }, 34.0);
+      up("#s10b", 34.0); up("#s10c", 34.25);
+      up("#s10d", 34.75); up("#s10e", 35.0);
+      tl.to("#s10", { opacity: 0, duration: 0.6, ease: "power1.in" }, 39.4);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

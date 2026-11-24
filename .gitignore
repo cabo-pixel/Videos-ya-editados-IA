@@ -1,0 +1,5 @@
+**/build/
+**/.hyperframes/
+**/node_modules/
+cabo-blanco-lote94/render/video_sin_audio.mp4
+cabo-blanco-lote94/render/render.log
