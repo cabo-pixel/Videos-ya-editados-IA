@@ -12,7 +12,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 FPS = 30
-OW, OH = 1080, 1920
+HORIZ = os.environ.get("FORMAT", "v") == "h"      # FORMAT=h → versión horizontal 16:9
+OW, OH = (1920, 1080) if HORIZ else (1080, 1920)
 SRC = "../cabo-blanco-lote94/source/fotos"
 FONT_SEMI = "hf/assets/fonts/Montserrat-600.ttf"
 FONT_BOLD = "hf/assets/fonts/InterTight-800.ttf"
@@ -35,6 +36,23 @@ SHOTS = {
     "s8_IMG_0191": dict(img="IMG_0191", dur=3.7, cx=0.50, pan=0.10, Z=0.18, T=(30, 0), win=0.92),
     "s9_IMG_0190": dict(img="IMG_0190", dur=4.8, cx=0.62, pan=0.08, Z=0.15, T=(-30, 0), win=0.95),
 }
+
+# Encuadres para 16:9: ventana al 88 % del ancho de la foto, el lote completo en cuadro
+SHOTS_H = {
+    "s2_IMG_0194": dict(img="IMG_0194", dur=3.7, cx=0.48, pan=0.02, Z=0.16, T=(40, 0), winw=0.96, cy=0.5),
+    "s3_IMG_0196": dict(img="IMG_0196", dur=4.3, cx=0.52, pan=0.02, Z=0.22, T=(-30, 0), winw=0.96, cy=0.55, trace=True),
+    "s4_IMG_0195": dict(img="IMG_0195", dur=4.3, cx=0.52, pan=-0.02, Z=0.10, T=(55, 0), winw=0.96, cy=0.58, trace=True),
+    "s5_IMG_0193": dict(img="IMG_0193", dur=4.7, cx=0.50, pan=0.02, Z=0.10, T=(-45, -10), winw=0.92, cy=0.66, trace=True,
+                        ground="45 × 41 M", ground_sub="FLAT · READY TO BUILD"),
+    "s6_IMG_0189": dict(img="IMG_0189", dur=4.2, cx=0.50, pan=0.02, Z=0.14, T=(35, 0), winw=0.96, cy=0.58,
+                        callouts=[(0.45, 0.83, "PAVED\nSTREET ACCESS", -1), (0.66, 0.66, "CFE POWER\nCITY WATER", 1)]),
+    "s7_IMG_0192": dict(img="IMG_0192", dur=3.9, cx=0.50, pan=0.02, Z=0.10, T=(-40, 0), winw=0.96, cy=0.55, trace=True,
+                        callouts=[(0.24, 0.513, "TRANSPENINSULAR\nHIGHWAY", 1)]),
+    "s8_IMG_0191": dict(img="IMG_0191", dur=3.7, cx=0.50, pan=0.02, Z=0.18, T=(30, 0), winw=0.96, cy=0.5),
+    "s9_IMG_0190": dict(img="IMG_0190", dur=4.8, cx=0.52, pan=0.02, Z=0.15, T=(-30, 0), winw=0.96, cy=0.5),
+}
+if HORIZ:
+    SHOTS = SHOTS_H
 
 
 def smooth(t):  # velocidad casi constante, con arranque/frenado muy suaves (como un dron)
@@ -65,8 +83,11 @@ class Cam:
         s.cfg, s.img, s.d = cfg, img, depth
         H, W = img.shape[:2]
         s.H, s.W = H, W
-        s.wh = H * cfg.get("win", 0.95)          # alto de la ventana en px de foto
-        s.ww = s.wh * OW / OH
+        if "winw" in cfg:                       # 16:9: la ventana se define por el ancho
+            s.ww = W * cfg["winw"]; s.wh = s.ww * OH / OW
+        else:
+            s.wh = H * cfg.get("win", 0.95)      # alto de la ventana en px de foto
+            s.ww = s.wh * OW / OH
         s.sc = s.wh / OH                        # px de foto por px de salida
         s.df = float(np.median(depth))          # plano de enfoque del paralaje
 
@@ -147,7 +168,7 @@ def draw_overlays(frame, cam, cfg, t, tsec):
             # eje u = borde frontal (v3→v2), eje w = hacia el fondo (v3→v0): etiqueta "acostada" en el terreno
             u = P[2] - P[3]; u = u / np.linalg.norm(u)
             w = P[0] - P[3]; w = w - u * (w @ u); w = w / np.linalg.norm(w)
-            Lu = 0.85 * np.linalg.norm(P[2] - P[3]); Lw = Lu * 0.5
+            Lu = (0.72 if HORIZ else 0.85) * np.linalg.norm(P[2] - P[3]); Lw = Lu * 0.5
             o = (P[2] + P[3]) / 2 - w * (Lw / 2 + 12)          # sobre el terreno libre, frente al borde del lote
             corners = [o - u * Lu / 2 + w * Lw / 2, o + u * Lu / 2 + w * Lw / 2, o + u * Lu / 2 - w * Lw / 2, o - u * Lu / 2 - w * Lw / 2]
             dst = np.array(cam.fwd([c.tolist() for c in corners], t), np.float32)
@@ -190,13 +211,14 @@ def draw_overlays(frame, cam, cfg, t, tsec):
 
 
 def main(names):
-    os.makedirs("build/clips", exist_ok=True)
+    CL = "build/clips_h" if HORIZ else "build/clips"
+    os.makedirs(CL, exist_ok=True)
     for key in names:
         cfg = SHOTS[key]
         img, d = load(cfg["img"])
         cam = Cam(cfg, img, d)
         n = int(round(cfg["dur"] * FPS))
-        out = f"build/clips/{key}.mp4"
+        out = f"{CL}/{key}.mp4"
         p = subprocess.Popen(["ffmpeg", "-y", "-v", "error", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{OW}x{OH}",
                               "-r", str(FPS), "-i", "-", "-c:v", "libx264", "-preset", "medium", "-crf", "14",
                               "-pix_fmt", "yuv420p", out], stdin=subprocess.PIPE)

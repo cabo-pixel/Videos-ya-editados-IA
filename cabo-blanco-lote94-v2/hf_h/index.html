@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <!-- Cabo Blanco · Caleta Loma Lot 94 · v2 «estilo Cerro Colorado» · 40 s · 1920x1080 (16:9) · 29.97 fps
+         Música "Galactic Rap" (Kevin MacLeod) 120 BPM → cortes en la rejilla de 0.5 s.
+         Las tomas (assets/clips) ya traen el movimiento de cámara y los gráficos "pegados al terreno";
+         aquí van los títulos, frases palabra por palabra, contador y el cierre de marca. -->
+    <script src="assets/vendor/gsap.min.js"></script>
+    <link rel="stylesheet" href="assets/fonts/fonts.css" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #283645; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #283645; color: #fff; }
+      .clip { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+      video.clip { object-fit: cover; }
+      .shade { position: absolute; left: 0; top: 0; width: 1920px; height: 760px; background: linear-gradient(180deg, rgba(0,0,0,.30) 0%, rgba(0,0,0,.12) 55%, rgba(0,0,0,0) 100%); }
+      .t { position: absolute; left: 160px; width: 1600px; text-align: center; text-shadow: 0 3px 24px rgba(0,0,0,.35); }
+      .title { font-family: "Inter Tight", Arial, sans-serif; font-weight: 800; font-size: 150px; line-height: .9; letter-spacing: -.03em; text-transform: uppercase; }
+      .sub { font-family: "Inter Tight", Arial, sans-serif; font-weight: 700; font-size: 60px; letter-spacing: -.01em; text-transform: uppercase; }
+      .phrase { font-family: "Montserrat", Arial, sans-serif; font-weight: 500; font-size: 54px; letter-spacing: .01em; text-transform: uppercase; line-height: 1.25; }
+      .phrase .w { display: inline-block; margin: 0 .16em; }
+      .num { font-family: "Inter Tight", Arial, sans-serif; font-weight: 800; font-size: 200px; line-height: .9; letter-spacing: -.04em; }
+      .num .d { display: inline-block; }
+      .unit { font-family: "Montserrat", Arial, sans-serif; font-weight: 400; font-style: italic; font-size: 58px; vertical-align: 18px; margin-left: 10px; }
+      .small { font-family: "Montserrat", Arial, sans-serif; font-weight: 500; font-size: 30px; letter-spacing: .12em; text-transform: uppercase; }
+      #fadeout { position: absolute; inset: 0; background: #283645; opacity: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="40" data-width="1920" data-height="1080">
+      <!-- ========== tomas ========== -->
+      <video id="v1" class="clip" src="assets/clips/s1_hook_IMG_0188_ia.mp4" data-start="0" data-duration="4.5" data-track-index="0" muted playsinline></video>
+      <video id="v2" class="clip" src="assets/clips/s2_IMG_0194.mp4" data-start="4.5" data-duration="3.5" data-track-index="0" muted playsinline></video>
+      <video id="v3" class="clip" src="assets/clips/s3_IMG_0196.mp4" data-start="8" data-duration="4" data-track-index="0" muted playsinline></video>
+      <video id="v4" class="clip" src="assets/clips/s4_IMG_0195.mp4" data-start="12" data-duration="4" data-track-index="0" muted playsinline></video>
+      <video id="v5" class="clip" src="assets/clips/s5_IMG_0193.mp4" data-start="16" data-duration="4.5" data-track-index="0" muted playsinline></video>
+      <video id="v6" class="clip" src="assets/clips/s6_IMG_0189.mp4" data-start="20.5" data-duration="4" data-track-index="0" muted playsinline></video>
+      <video id="v7" class="clip" src="assets/clips/s7_IMG_0192.mp4" data-start="24.5" data-duration="3.5" data-track-index="0" muted playsinline></video>
+      <video id="v8" class="clip" src="assets/clips/s8_IMG_0191.mp4" data-start="28" data-duration="3.5" data-track-index="0" muted playsinline></video>
+      <video id="v9" class="clip" src="assets/clips/s9_IMG_0190.mp4" data-start="31.5" data-duration="4.5" data-track-index="0" muted playsinline></video>
+      <video id="v10" class="clip" src="assets/clips/CB_logo_16x9.mp4" data-start="36" data-duration="4" data-track-index="0" muted playsinline style="z-index:5"></video>
+
+      <!-- ========== textos ========== -->
+      <div id="g1" class="clip" data-start="0" data-duration="4.5" data-track-index="1" style="z-index:2">
+        <div class="shade"></div>
+        <div class="t" style="top:300px">
+          <div class="title"><span class="w1" style="display:inline-block">Caleta</span> <span class="w1" style="display:inline-block">Loma</span></div>
+          <div class="sub" id="g1s" style="margin-top:26px">Lot 94</div>
+        </div>
+      </div>
+
+      <div id="g2" class="clip" data-start="4.5" data-duration="3.5" data-track-index="1" style="z-index:2">
+        <div class="t phrase" style="top:250px"><span class="w">One</span><span class="w">of</span><span class="w">the</span><span class="w">last</span><span class="w">oceanside</span><span class="w">lots</span></div>
+      </div>
+
+      <div id="g3" class="clip" data-start="8" data-duration="4" data-track-index="1" style="z-index:2">
+        <div class="t phrase" style="top:250px"><span class="w">Palmilla's</span><span class="w">&nbsp;</span><span class="w">oceanside</span><span class="w">&nbsp;</span><span class="w">corridor</span></div>
+      </div>
+
+      <div id="g4" class="clip" data-start="12" data-duration="4" data-track-index="1" style="z-index:2">
+        <div class="shade" id="sh4"></div>
+        <div class="t" style="top:170px">
+          <div class="num"><span id="n4">0</span><span class="unit">m2</span></div>
+          <div class="phrase" style="margin-top:20px"><span class="w">Of</span><span class="w">oceanview</span><span class="w">land</span></div>
+        </div>
+      </div>
+
+      <div id="g8" class="clip" data-start="28" data-duration="3.5" data-track-index="1" style="z-index:2">
+        <div class="t phrase" style="top:200px"><span class="w" id="w8a">Your canvas</span>&nbsp;<span class="w" id="w8b">your legacy</span></div>
+      </div>
+
+      <div id="g9" class="clip" data-start="31.5" data-duration="4.5" data-track-index="1" style="z-index:2">
+        <div class="shade" id="sh9" style="background:linear-gradient(180deg,rgba(0,0,0,.45) 0%,rgba(0,0,0,.25) 50%,rgba(0,0,0,0) 100%)"></div>
+        <div class="t phrase" id="g9a" style="top:170px;line-height:1.9"><span class="w">Location</span><br /><span class="w">Access</span><br /><span class="w">Views</span></div>
+        <div class="t" id="g9b" style="top:230px">
+          <div class="phrase"><span class="w">Own the horizon,</span> <span class="w">inquire today</span></div>
+          <div class="small" id="g9c" style="margin-top:34px">Caleta Loma · Lot 94</div>
+          <div class="sub" id="g9d" style="margin-top:10px;font-size:64px">$1,450,000 USD</div>
+        </div>
+      </div>
+
+      <div id="fadeout" class="clip" data-start="35.6" data-duration="0.4" data-track-index="2" style="z-index:4"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      // aparición estilo referencia: opacidad + desenfoque, leve escala
+      const inW = (sel, t, st = 0.18, d = 0.55) =>
+        tl.fromTo(sel, { opacity: 0, filter: "blur(14px)", y: 10 }, { opacity: 1, filter: "blur(0px)", y: 0, duration: d, ease: "power2.out", stagger: st }, t);
+      const outW = (sel, t, st = 0.06, d = 0.45) =>
+        tl.to(sel, { opacity: 0, filter: "blur(16px)", duration: d, ease: "power2.in", stagger: st }, t);
+
+      // S1 · título sobre el vuelo IA
+      tl.fromTo("#g1 .w1", { opacity: 0, scale: 1.08, filter: "blur(18px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.7, ease: "power3.out", stagger: 0.25 }, 0.5);
+      inW("#g1s", 1.3, 0, 0.5);
+      tl.fromTo("#g1 .shade", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.3);
+      outW("#g1 .w1, #g1s", 3.85, 0.05, 0.5);
+
+      // S2 · frase palabra por palabra
+      inW("#g2 .w", 4.75, 0.17);
+      outW("#g2 .w", 7.4);
+
+      // S3 · frase espaciada (como "CABO'S  ELITE  CORRIDOR")
+      inW("#g3 .w", 8.9, 0.32);
+      outW("#g3 .w", 11.3);
+
+      // S4 · contador grande con desenfoque + "OF OCEANVIEW LAND"
+      const n4 = document.querySelector("#n4"), o4 = { v: 0 };
+      tl.fromTo("#g4 .num", { opacity: 0, filter: "blur(20px)", scale: 1.06 }, { opacity: 1, filter: "blur(0px)", scale: 1, duration: 0.7, ease: "power2.out" }, 12.2);
+      tl.to(o4, { v: 1832, duration: 1.4, ease: "power3.out", onUpdate: () => { n4.textContent = Math.round(o4.v).toLocaleString("en-US"); } }, 12.2);
+      inW("#g4 .phrase .w", 13.2, 0.2);
+      outW("#g4 .num, #g4 .phrase .w", 15.35);
+
+      // S8 · YOUR CANVAS  YOUR LEGACY
+      inW("#w8a", 28.3, 0, 0.6);
+      inW("#w8b", 28.9, 0, 0.6);
+      outW("#w8a, #w8b", 30.95);
+
+      // S9 · LOCATION / ACCESS / VIEWS → CTA
+      inW("#g9a .w", 31.65, 0.3, 0.45);
+      outW("#g9a .w", 32.85, 0.04, 0.35);
+      inW("#g9b .phrase .w", 33.2, 0.35);
+      inW("#g9c, #g9d", 33.6, 0.12);
+      tl.fromTo("#fadeout", { opacity: 0 }, { opacity: 1, duration: 0.4, ease: "power1.in" }, 35.6);
+
+      tl.fromTo("#sh4", { opacity: 0 }, { opacity: 1, duration: 0.5 }, 12.1);
+      tl.to("#sh4", { opacity: 0, duration: 0.4 }, 15.5);
+      tl.fromTo("#sh9", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 31.6);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>

@@ -3,8 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 MUSIC="hf/assets/audio/galactic-rap_kevin-macleod.mp3"
-VIDEO="render/video_sin_audio.mp4"
-OUT="render/CaboBlanco_CaletaLoma_Lote94_v2_dron_9x16_40s.mp4"
+VIDEO="${1:-render/video_sin_audio.mp4}"
+OUT="${2:-render/CaboBlanco_CaletaLoma_Lote94_v2_dron_9x16_40s.mp4}"
 mkdir -p build render
 ffmpeg -y -v error -ss 0.03 -t 40 -i "$MUSIC" -af "aresample=48000,afade=t=in:st=0:d=2:curve=qsin,volume=1.0,afade=t=out:st=36.2:d=3.8" -ac 2 build/music.wav
 python3 scripts/04_sfx.py

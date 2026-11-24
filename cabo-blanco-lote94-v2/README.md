@@ -5,7 +5,14 @@ generado con IA (Kling 3.0 Pro en Higgsfield). Las otras 8 son movimientos de c�
 a partir de un mapa de profundidad (Depth Anything V2). La edición sigue el estilo de la referencia de Cabo Blanco y
 cierra con su placa de logo.
 
-**Render final:** `render/CaboBlanco_CaletaLoma_Lote94_v2_dron_9x16_40s.mp4`
+**Renders finales:**
+- Vertical 9:16 (Reels/TikTok, 1080×1920, 30 fps): `render/CaboBlanco_CaletaLoma_Lote94_v2_dron_9x16_40s.mp4` — proyecto `hf/`
+- Horizontal 16:9 (como la referencia, 1920×1080, 29.97 fps): `render/CaboBlanco_CaletaLoma_Lote94_v2_dron_16x9_40s.mp4` — proyecto `hf_h/`
+
+La versión 16:9 usa el mismo clip IA recortado a 16:9 (no gastó créditos), tomas 2.5D con encuadre propio
+(`FORMAT=h python3 scripts/03_parallax.py` → `build/clips_h`) y una placa de logo 16:9 reconstruida a partir de
+`CB_logo.mp4` (`hf_h/assets/clips/CB_logo_16x9.mp4`, mismo fondo, logo y URL).
+Mezcla: `./scripts/05_mix_and_mux.sh render/video_sin_audio_16x9.mp4 render/CaboBlanco_CaletaLoma_Lote94_v2_dron_16x9_40s.mp4`
 
 ## Línea de tiempo
 | Seg. | Toma | Origen / movimiento | Texto / gráfico |
